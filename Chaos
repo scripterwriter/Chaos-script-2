@@ -588,3 +588,165 @@ end)
 Section:NewKeybind("Toggle UI", "Show/Hide the UI", Enum.KeyCode.F6, function()
     Library:ToggleUI()
 end)
+
+
+local MainTab = Window:NewTab("Players")
+local PlayerSection = MainTab:NewSection("Player Hacks")
+
+-- Infinite Jump Toggle
+local infJumpEnabled = false
+local infJumpConnection
+
+PlayerSection:NewToggle("Infinite Jump", "Allows you to jump repeatedly in mid-air", function(state)
+    if state then
+        infJumpEnabled = true
+        infJumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function()
+            if infJumpEnabled then
+                game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+            end
+        end)
+        local Callback = Instance.new("BindableFunction")
+		function Callback.OnInvoke(Button)
+			
+		end
+		game:GetService("StarterGui"):SetCore("SendNotification", {
+			Title = "inf jump on",
+			Text = "inf jump on",
+			Icon = "nil",
+			Duration = 5,
+			Callback = Callback,
+			Button1 = ok,
+			Button2 = ok,
+		})
+		Callback:Destroy()("Infinite Jump: ON")
+    else
+        infJumpEnabled = false
+        if infJumpConnection then
+            infJumpConnection:Disconnect()
+        end
+        local Callback = Instance.new("BindableFunction")
+		function Callback.OnInvoke(Button)
+			
+		end
+		game:GetService("StarterGui"):SetCore("SendNotification", {
+			Title = "Inf jump off",
+			Text = "inf jump off",
+			Icon = "nil",
+			Duration = 5,
+			Callback = Callback,
+			Button1 = ok,
+			Button2 = ok,
+		})
+		Callback:Destroy()("Infinite Jump: OFF")
+    end
+end)
+
+
+PlayerSection:NewButton("Click Teleport", "Gives you a tool - equip it and click anywhere to teleport there", function()
+    local player = game.Players.LocalPlayer
+    local mouse = player:GetMouse()
+    
+    -- Check if the tool already exists to avoid duplicates
+    local existingTool = player.Backpack:FindFirstChild("Click TP Tool") or (player.Character and player.Character:FindFirstChild("Click TP Tool"))
+    
+    if existingTool then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Click Teleport",
+            Text = "You already have the tool! Check your backpack.",
+            Duration = 4
+        })
+        return
+    end
+    
+    -- Create the tool
+    local clickTPTool = Instance.new("Tool")
+    clickTPTool.Name = "Click TP Tool"
+    clickTPTool.RequiresHandle = false
+    clickTPTool.CanBeDropped = false
+    
+    clickTPTool.Activated:Connect(function()
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local targetPos = mouse.Hit.Position + Vector3.new(0, 3, 0)
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos)
+        end
+    end)
+    
+    clickTPTool.Parent = player.Backpack
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Click Teleport",
+        Text = "Tool added to your backpack! Equip it and click where you want to go.",
+        Duration = 6
+    })
+end)
+
+
+PlayerSection:NewToggle("Hidden Fling", "Secretly flings anyone near you (anti-fling detection)", function(state)
+    local Players = game:GetService("Players")
+    local RunService = game:GetService("RunService")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local StarterGui = game:GetService("StarterGui")
+    
+    local player = Players.LocalPlayer
+    
+    -- Create detection object once
+    if not ReplicatedStorage:FindFirstChild("juisdfj0i32i0eidsuf0iok") then
+        local detection = Instance.new("Decal")
+        detection.Name = "juisdfj0i32i0eidsuf0iok"
+        detection.Parent = ReplicatedStorage
+    end
+    
+    -- Persistent variables stored in the player's attributes to survive multiple toggles
+    if player:GetAttribute("HiddenFlingActive") == nil then
+        player:SetAttribute("HiddenFlingActive", false)
+    end
+    
+    local function notify(text, duration)
+        StarterGui:SetCore("SendNotification", {
+            Title = "Hidden Fling",
+            Text = text,
+            Duration = duration or 4
+        })
+    end
+    
+    if state then
+        -- TURN ON
+        if player:GetAttribute("HiddenFlingActive") then
+            notify("Already enabled!", 3)
+            return
+        end
+        
+        player:SetAttribute("HiddenFlingActive", true)
+        
+        local movel = 0.1
+        
+        spawn(function()
+            while player:GetAttribute("HiddenFlingActive") do
+                RunService.Heartbeat:Wait()
+                
+                local character = player.Character
+                if not character then continue end
+                
+                local hrp = character:FindFirstChild("HumanoidRootPart")
+                if not hrp then continue end
+                
+                local vel = hrp.Velocity
+                
+                hrp.Velocity = vel * 10000 + Vector3.new(0, 10000, 0)
+                RunService.RenderStepped:Wait()
+                hrp.Velocity = vel
+                RunService.Stepped:Wait()
+                hrp.Velocity = vel + Vector3.new(0, movel, 0)
+                movel = -movel
+            end
+        end)
+        
+        notify("Enabled - Flinging active!", 4)
+        
+    else
+        -- TURN OFF
+        player:SetAttribute("HiddenFlingActive", false)
+        
+        notify("Disabled", 3)
+    end
+end)
