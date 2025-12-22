@@ -749,6 +749,4 @@ PlayerSection:NewToggle("Hidden Fling", "Secretly flings anyone near you (anti-f
         
         notify("Disabled", 3)
     end
-end)
-
-return
+end)return
